@@ -5,6 +5,7 @@ import {Vue} from './vue/vue'
 
 console.log(a)
 var a = 123
+
 const vm = new Vue({
     el: 'app',
     data: {
