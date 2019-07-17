@@ -1,3 +1,5 @@
+import {Subscriber} from '../publish/subscriber'
+
 function Compiler (node, vm) {
     this.node = node
     this.vm = vm
@@ -35,7 +37,10 @@ Compiler.prototype.mapTo = function (node) {
         const text = currentChild.nodeValue
         if (reg.test(text)) {
             const dataKey = RegExp.$1.trim();
-            currentChild.nodeValue = this.vm.data[dataKey];
+            //currentChild.nodeValue = this.vm.data[dataKey];
+
+            //生成与dataKey相关联的节点的订阅者
+            new Subscriber(dataKey, currentChild, this.vm);
         }
     }
 }

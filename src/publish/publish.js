@@ -15,3 +15,13 @@ Dep.prototype.notify = function () {
         sub.update();
     })
 }
+
+//定义发布者
+function Publish (dep) {
+    this.dep = dep;
+}
+
+//发布通知
+Publish.prototype.publish = function () {
+    this.dep.notify();
+}
