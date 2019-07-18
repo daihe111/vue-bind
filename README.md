@@ -66,6 +66,7 @@ Compiler.prototype.mapTo  =  function (node) {
 }  
 ```
 代码中的Subscriber对象是用来将data中相应的值和dom节点相关联的订阅者，它负责在发布者发布通知时执行更新，别急，我们在后边的代码中将会定义它！
+
 **2. 定义能将data转化为观察者模式的observer**
 ```javascript
 //定义观察者obserser
