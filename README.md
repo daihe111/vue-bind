@@ -1,3 +1,4 @@
+
 # vue双向绑定原理解析
 
 ## vue双向绑定原理技术要点
@@ -13,13 +14,15 @@
 
 ## vue双向绑定具体实现过程
 
-编译阶段，将vue实例的data部分映射到实际的dom节点上
-```
+**1.  编译阶段，将vue实例的data部分映射到实际的dom节点上**
+```javascript
+//定义编译器，用来将data映射到dom节点上
 function  Compiler (node, vm) {
 	this.node  =  node
 	this.vm  =  vm
 }
 
+//将编译好的节点劫持到documentFragment对象中，并整体插入原有的dom容器中
 Compiler.prototype.toFragment  =  function () {
 	const  fragment  =  document.createDocumentFragment()
 	while (this.node.firstChild) {
@@ -29,6 +32,7 @@ Compiler.prototype.toFragment  =  function () {
 	return  fragment;
 }
 
+//将data映射到单个节点上
 Compiler.prototype.mapTo  =  function (node) {
 	const  currentChild  =  node;
 	//节点类型为dom
@@ -61,101 +65,86 @@ Compiler.prototype.mapTo  =  function (node) {
 	}
 }  
 ```
+代码中的Subscriber对象是用来将data中相应的值和dom节点相关联的订阅者，它负责在发布者发布通知时执行更新，别急，我们在后边的代码中将会定义它！
+**2. 定义能将data转化为观察者模式的observer**
+```javascript
+//定义观察者obserser
 
-## Save a file
-
-You can save any file of the workspace to **Google Drive**, **Dropbox** or **GitHub** by opening the **Synchronize** sub-menu and clicking **Save on**. Even if a file in the workspace is already synced, you can save it to another location. StackEdit can sync one file with multiple locations and accounts.
-
-## Synchronize a file
-
-Once your file is linked to a synchronized location, StackEdit will periodically synchronize it by downloading/uploading any modification. A merge will be performed if necessary and conflicts will be resolved.
-
-If you just have modified your file and you want to force syncing, click the **Synchronize now** button in the navigation bar.
-
-> **Note:** The **Synchronize now** button is disabled if you have no file to synchronize.
-
-## Manage file synchronization
-
-Since one file can be synced with multiple locations, you can list and manage synchronized locations by clicking **File synchronization** in the **Synchronize** sub-menu. This allows you to list and remove synchronized locations that are linked to your file.
-
-
-# Publication
-
-Publishing in StackEdit makes it simple for you to publish online your files. Once you're happy with a file, you can publish it to different hosting platforms like **Blogger**, **Dropbox**, **Gist**, **GitHub**, **Google Drive**, **WordPress** and **Zendesk**. With [Handlebars templates](http://handlebarsjs.com/), you have full control over what you export.
-
-> Before starting to publish, you must link an account in the **Publish** sub-menu.
-
-## Publish a File
-
-You can publish your file by opening the **Publish** sub-menu and by clicking **Publish to**. For some locations, you can choose between the following formats:
-
-- Markdown: publish the Markdown text on a website that can interpret it (**GitHub** for instance),
-- HTML: publish the file converted to HTML via a Handlebars template (on a blog for example).
-
-## Update a publication
-
-After publishing, StackEdit keeps your file linked to that publication which makes it easy for you to re-publish it. Once you have modified your file and you want to update your publication, click on the **Publish now** button in the navigation bar.
-
-> **Note:** The **Publish now** button is disabled if your file has not been published yet.
-
-## Manage file publication
-
-Since one file can be published to multiple locations, you can list and manage publish locations by clicking **File publication** in the **Publish** sub-menu. This allows you to list and remove publication locations that are linked to your file.
-
-
-# Markdown extensions
-
-StackEdit extends the standard Markdown syntax by adding extra **Markdown extensions**, providing you with some nice features.
-
-> **ProTip:** You can disable any **Markdown extension** in the **File properties** dialog.
-
-
-## SmartyPants
-
-SmartyPants converts ASCII punctuation characters into "smart" typographic punctuation HTML entities. For example:
-
-|                |ASCII                          |HTML                         |
-|----------------|-------------------------------|-----------------------------|
-|Single backticks|`'Isn't this fun?'`            |'Isn't this fun?'            |
-|Quotes          |`"Isn't this fun?"`            |"Isn't this fun?"            |
-|Dashes          |`-- is en-dash, --- is em-dash`|-- is en-dash, --- is em-dash|
-
-
-## KaTeX
-
-You can render LaTeX mathematical expressions using [KaTeX](https://khan.github.io/KaTeX/):
-
-The *Gamma function* satisfying $\Gamma(n) = (n-1)!\quad\forall n\in\mathbb N$ is via the Euler integral
-
-$$
-\Gamma(z) = \int_0^\infty t^{z-1}e^{-t}dt\,.
-$$
-
-> You can find more information about **LaTeX** mathematical expressions [here](http://meta.math.stackexchange.com/questions/5020/mathjax-basic-tutorial-and-quick-reference).
-
-
-## UML diagrams
-
-You can render UML diagrams using [Mermaid](https://mermaidjs.github.io/). For example, this will produce a sequence diagram:
-
-```mermaid
-sequenceDiagram
-Alice ->> Bob: Hello Bob, how are you?
-Bob-->>John: How about you John?
-Bob--x Alice: I am good thanks!
-Bob-x John: I am good thanks!
-Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.
-
-Bob-->Alice: Checking with John...
-Alice->John: Yes... John, how are you?
+function  obserser (obj) {
+	for (let  key  in  obj) {
+		const  currentItem  =  obj[key];
+		if (typeof  currentItem  ===  'object') {
+			obserser(currentItem);
+		}
+		//为当前dataKey定义一个全局订阅者容器
+		const  dep  =  new  Dep();
+		let  value  =  currentItem;
+		Object.defineProperty(obj, key, {
+			get:  function () {
+				//把订阅者添加到当前容器数组中
+				if (Dep.target) {
+					dep.push(Dep.target);
+				}
+				return  value;
+			},
+			set:  function (val) {
+				if (val  ===  value) {
+					return;
+				}
+				value  =  val;
+				//赋值时触发相应的动作
+				dep.notify();
+			}
+		})
+	}
+}
 ```
+observer通过递归的方式，能将传入的对象深度转换为getter/setter模式，这样就能够做到数据劫持。model改变触发view改变的关键之处就在这里，我们可以在set函数中设置一个消息通知器(我们暂时这么称呼它)，当我们改变对象中的值时，会触发它所对应的set函数，同时发布者会发送通知，告诉所有订阅者获取最新的值，从而改变view。
+**3.定义订阅者**
+```javascript
+//定义订阅者
+function  Subscriber (dataKey, node, vm) {
+	//定义Subscriber实例时添加到全局Dep
+	Dep.target  =  this;
+	this.dataKey  =  dataKey;
+	this.node  =  node;
+	this.vm  =  vm;
+	//首次模板编译时执行数据更新
+	this.update();
+	//update()中get data值会触发dataKey所对应的getter，getter中将当前订阅者入栈后，需要将全局target置空
+	Dep.target  =  null;
+}
 
-And this will produce a flow chart:
+//订阅者的更新函数
+Subscriber.prototype.update  =  function () {
+	this.node.nodeValue  =  this.getValue();
+}
 
-```mermaid
-graph LR
-A[Square Rect] -- Link text --> B((Circle))
-A --> C(Round Rect)
-B --> D{Rhombus}
-C --> D
+//从vm中取最新的数据值
+Subscriber.prototype.getValue  =  function () {
+	return  this.vm.data[this.dataKey];
+}
 ```
+订阅者包含了dataKey、node两个关键属性，dataKey代表data中的键值，node代表和该dataKey关联在一起的dom节点，即dataKey对应的值变化时，会触发node外观的更新，update函数负责执行节点内容的更新操作。
+***注意：***  由于定义Subscriber实例时的作用域和发布者不是同一个，因此需要引入一个全局变量最为桥梁，就是我们上面定义的Dep.target，他的作用和java里的stactic类似，这就使我们在定义观察者实例时，将观察者存储到Dep.target中，并在编译阶段触发get函数，将订阅者存到dataKey所对应的发布者容器里。
+**4.定义发布者**
+```javascript
+//定义一个订阅者容器(即发布者)
+function  Dep () {
+	this.subs  = [];
+}
+  
+//新增订阅者
+Dep.prototype.push  =  function (sub) {
+	this.subs.push(sub);
+}
+  
+//通知所有订阅者执行更新
+Dep.prototype.notify  =  function () {
+	this.subs.forEach((sub, index) => {
+		//每一个订阅者执行更新操作
+		sub.update();
+	})
+}
+```
+发布者是一个订阅者容器，它有一个通知函数，当执行该函数时，容器中所有的订阅者都会执行update，触发view的更新。
