@@ -1,5 +1,5 @@
 import {Compiler} from '../compiler/compiler'
-import {watcher} from '../watcher/watcher'
+import {obserser} from '../observer/observer'
 
 function Vue (options) {
     this.data = options.data;
@@ -7,7 +7,7 @@ function Vue (options) {
 
 
     //将data转化为观察者模式
-    watcher(this.data);
+    obserser(this.data);
     
     //编译
     const dom = document.getElementById(this.el);

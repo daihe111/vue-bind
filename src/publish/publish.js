@@ -1,4 +1,4 @@
-//定义一个订阅者容器
+//定义一个订阅者容器(即发布者)
 function Dep () {
     this.subs = [];
 }
@@ -16,12 +16,4 @@ Dep.prototype.notify = function () {
     })
 }
 
-//定义发布者
-function Publish (dep) {
-    this.dep = dep;
-}
-
-//发布通知
-Publish.prototype.publish = function () {
-    this.dep.notify();
-}
+export {Dep}
