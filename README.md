@@ -15,6 +15,7 @@
 ## vue双向绑定具体实现过程
 
 **1.  编译阶段，将vue实例的data部分映射到实际的dom节点上**
+
 ```javascript
 //定义编译器，用来将data映射到dom节点上
 function  Compiler (node, vm) {
@@ -68,6 +69,7 @@ Compiler.prototype.mapTo  =  function (node) {
 代码中的Subscriber对象是用来将data中相应的值和dom节点相关联的订阅者，它负责在发布者发布通知时执行更新，别急，我们在后边的代码中将会定义它！
 
 **2. 定义能将data转化为观察者模式的observer**
+
 ```javascript
 //定义观察者obserser
 
@@ -101,7 +103,9 @@ function  obserser (obj) {
 }
 ```
 observer通过递归的方式，能将传入的对象深度转换为getter/setter模式，这样就能够做到数据劫持。model改变触发view改变的关键之处就在这里，我们可以在set函数中设置一个消息通知器(我们暂时这么称呼它)，当我们改变对象中的值时，会触发它所对应的set函数，同时发布者会发送通知，告诉所有订阅者获取最新的值，从而改变view。
+
 **3.定义订阅者**
+
 ```javascript
 //定义订阅者
 function  Subscriber (dataKey, node, vm) {
@@ -128,7 +132,9 @@ Subscriber.prototype.getValue  =  function () {
 ```
 订阅者包含了dataKey、node两个关键属性，dataKey代表data中的键值，node代表和该dataKey关联在一起的dom节点，即dataKey对应的值变化时，会触发node外观的更新，update函数负责执行节点内容的更新操作。
 ***注意：***  由于定义Subscriber实例时的作用域和发布者不是同一个，因此需要引入一个全局变量最为桥梁，就是我们上面定义的Dep.target，他的作用和java里的stactic类似，这就使我们在定义观察者实例时，将观察者存储到Dep.target中，并在编译阶段触发get函数，将订阅者存到dataKey所对应的发布者容器里。
+
 **4.定义发布者**
+
 ```javascript
 //定义一个订阅者容器(即发布者)
 function  Dep () {
