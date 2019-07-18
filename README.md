@@ -1,4 +1,4 @@
-# Welcome to StackEdit!
+# vue双向绑定原理解析
 
 ## vue双向绑定原理技术要点
 
