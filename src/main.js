@@ -3,8 +3,15 @@ import {Compiler} from './compiler/compiler'
 import {watcher} from './watcher/watcher'
 import {Vue} from './vue/vue'
 
-console.log(a)
-var a = 123
+function c (a) {
+    console.log(a)
+    function a () {
+
+    }
+    a = 3
+    console.log(a)
+}
+c(2)
 
 const vm = new Vue({
     el: 'app',
